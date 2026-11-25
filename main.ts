@@ -17,10 +17,16 @@
 // Run outside the grader, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const POWER =
   "I can breathe underwater, but only in puddles.";
+
+// The gate wants 1 to 140 characters of UTF-8 text: fail loudly here
+// rather than shipping a line the gate would refuse.
+if (POWER.length < 1 || POWER.length > 140) {
+  throw new Error(`entry is ${POWER.length} characters, outside 1-140`);
+}
 
 const dest = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 
@@ -28,5 +34,9 @@ const dest = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 // never remove it and never empty it wholesale.
 mkdirSync(dest, { recursive: true });
 writeFileSync(`${dest}/entry.txt`, POWER, "utf8");
+
+// Self-check: both grader runs must write the same bytes.
+const written = readFileSync(`${dest}/entry.txt`, "utf8");
+if (written !== POWER) throw new Error("entry.txt does not match the line");
 
 console.log(`wrote ${dest}/entry.txt (${POWER.length} characters)`);
